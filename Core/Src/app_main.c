@@ -9,6 +9,7 @@
  */
 
 #include <stdio.h>
+#include <stdint.h>
 #include "main.h"
 
 extern void SystemClock_Config(void); // grabs auto-generated function from main.c
@@ -60,7 +61,7 @@ int main(void)
   MX_GPIO_Init();
   MX_USART2_UART_Init();
   while (1) {
-    char msg[] = "hello world\n\r";
+    uint8_t msg[] = "hello world\n\r";
     (void)HAL_UART_Transmit(&huart2, msg, sizeof(msg), 1000);
     HAL_Delay(1000);
   }

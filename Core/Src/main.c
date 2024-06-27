@@ -56,7 +56,8 @@ static void MX_USART2_UART_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
 /* USER CODE END 0 */
 
 /**
@@ -181,7 +182,7 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
-
+#pragma GCC diagnostic pop
 /* USER CODE END 4 */
 
 /**
