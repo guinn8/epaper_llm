@@ -1,6 +1,6 @@
 #!/bin/bash
 
-ELF_FILE="$1"
+ELF_FILE="build/nucleo_test.elf"
 st-util &
 arm-none-eabi-gdb "$ELF_FILE" \
     -ex "target extended-remote :4242" \
