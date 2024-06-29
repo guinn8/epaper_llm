@@ -37,6 +37,7 @@ BUILD_DIR = build
 # C sources
 C_SOURCES =  \
 Core/Src/main.c \
+Core/Src/peripheral_init.c \
 Core/Src/driver_esp8266.c \
 Core/Src/app_main.c \
 Core/Src/stm32f4xx_it.c \

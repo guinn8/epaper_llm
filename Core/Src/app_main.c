@@ -16,83 +16,35 @@
 #include <string.h>
 
 #include "main.h"
+#include "peripheral_init.h"
 #include "stm32f4xx_hal_uart.h"
 #include "driver_esp8266.h"
 
 extern void SystemClock_Config(void); // grabs auto-generated function from main.c
-static UART_HandleTypeDef huart1;
-static UART_HandleTypeDef huart2;
-
-static void MX_USART1_UART_Init(void) {
-  huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
-  huart1.Init.WordLength = UART_WORDLENGTH_8B;
-  huart1.Init.StopBits = UART_STOPBITS_1;
-  huart1.Init.Parity = UART_PARITY_NONE;
-  huart1.Init.Mode = UART_MODE_TX_RX;
-  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart1) != HAL_OK) {
-    Error_Handler();
-  }
-}
-
-static void MX_USART2_UART_Init(void) {
-  huart2.Instance = USART2;
-  huart2.Init.BaudRate = 115200;
-  huart2.Init.WordLength = UART_WORDLENGTH_8B;
-  huart2.Init.StopBits = UART_STOPBITS_1;
-  huart2.Init.Parity = UART_PARITY_NONE;
-  huart2.Init.Mode = UART_MODE_TX_RX;
-  huart2.Init.HwFlowCtl = UART_HWCONTROL_NONE;
-  huart2.Init.OverSampling = UART_OVERSAMPLING_16;
-  if (HAL_UART_Init(&huart2) != HAL_OK) {
-    Error_Handler();
-  }
-}
-
-static void MX_GPIO_Init(void) {
-  GPIO_InitTypeDef GPIO_InitStruct = {0};
-  __HAL_RCC_GPIOC_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOA_CLK_ENABLE();
-  __HAL_RCC_GPIOB_CLK_ENABLE();
-
-  HAL_GPIO_WritePin(LD2_GPIO_Port, LD2_Pin, GPIO_PIN_RESET);
-  GPIO_InitStruct.Pin = B1_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-
-  HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
-  GPIO_InitStruct.Pin = LD2_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
-
-  HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
-}
-
+static UART_HandleTypeDef *printf_uart = NULL;
 
 void UART_Printf(const char *format, ...) {
+  assert(printf_uart); // needs to be set
   char buffer[256];
   va_list args;
   va_start(args, format);
   vsnprintf(buffer, sizeof(buffer), format, args);
   va_end(args);
-  HAL_UART_Transmit(&huart2, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
+  HAL_UART_Transmit(printf_uart, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
 }
 
 int main(void) {
   HAL_Init();
   SystemClock_Config();
   MX_GPIO_Init();
-  MX_USART1_UART_Init();
-  MX_USART2_UART_Init();
+  UART_HandleTypeDef * uart1 = MX_USART1_UART_Init();
+  UART_HandleTypeDef * uart2 = MX_USART2_UART_Init();
+  printf_uart = uart2;
 
   while (1) {
     uint8_t cmd[] = "AT";
     uint8_t resp[128] = {0};
-    if (NULL == AT_Command(&huart1, cmd, resp, sizeof(resp))) {
+    if (NULL == AT_Command(uart1, cmd, resp, sizeof(resp))) {
       UART_Printf("AT command failed!\n\r");
     } else {
       UART_Printf("Response: %s\n\r", resp);
