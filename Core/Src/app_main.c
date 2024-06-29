@@ -17,6 +17,7 @@
 
 #include "main.h"
 #include "stm32f4xx_hal_uart.h"
+#include "driver_esp8266.h"
 
 extern void SystemClock_Config(void); // grabs auto-generated function from main.c
 static UART_HandleTypeDef huart1;
@@ -71,21 +72,6 @@ static void MX_GPIO_Init(void) {
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 }
 
-void TransceiveCharacterByCharacter(UART_HandleTypeDef *huart, uint8_t *message, uint8_t *response,
-				    uint16_t response_size) {
-  uint16_t index = 0;
-  while (*message) {
-    (void)HAL_UART_Transmit(huart, message, 1, 10);
-
-    if (index < response_size - 1) {
-      assert(HAL_ERROR != HAL_UART_Receive(huart, &response[index], 1, 1000));
-      index++;
-    }
-
-    message++;
-  }
-  response[index] = '\0';
-}
 
 void UART_Printf(const char *format, ...) {
   char buffer[256];
@@ -94,45 +80,6 @@ void UART_Printf(const char *format, ...) {
   vsnprintf(buffer, sizeof(buffer), format, args);
   va_end(args);
   HAL_UART_Transmit(&huart2, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
-}
-
-uint8_t *AT_Command(UART_HandleTypeDef *huart, uint8_t *command, uint8_t *response, uint16_t response_size) {
-  uint8_t fmt_cmd[128] = {0};
-  snprintf(fmt_cmd, sizeof(fmt_cmd), "%s\r\n", command); // todo check error
-
-  uint8_t echo[128] = {0};
-  TransceiveCharacterByCharacter(huart, fmt_cmd, echo, sizeof(echo));
-  if (strncmp((char *)command, (char *)echo, strlen((char *)command)) != 0) {
-    return NULL;
-  }
-
-  uint8_t interstitial_control[3] = {0};
-  if (HAL_OK != HAL_UART_Receive(huart, interstitial_control, 3, 1000)) {
-    return NULL;
-  } else if (strncmp("\n\r\n", interstitial_control, sizeof(interstitial_control))) {
-    return NULL;
-  }
-
-  uint16_t index = 0;
-  uint8_t prev_ch;
-  while (index < response_size - 1) {
-    uint8_t ch;
-    if (HAL_UART_Receive(huart, &ch, 1, 1000) != HAL_OK) {
-      return NULL;
-    }
-
-    if (ch == '\r') {
-      prev_ch = ch;
-      continue;
-    } else if (ch == '\n' && prev_ch == '\r') {
-      response[index] = '\0';
-      return response;
-    }
-
-    response[index++] = ch;
-  }
-
-  return NULL;
 }
 
 int main(void) {
