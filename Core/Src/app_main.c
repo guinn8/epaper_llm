@@ -15,10 +15,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "driver_esp8266.h"
 #include "main.h"
 #include "peripheral_init.h"
 #include "stm32f4xx_hal_uart.h"
-#include "driver_esp8266.h"
 
 extern void SystemClock_Config(void); // grabs auto-generated function from main.c
 static UART_HandleTypeDef *printf_uart = NULL;
@@ -35,23 +35,26 @@ int __io_getchar(void) {
   return c;
 }
 
-
 int main(void) {
   HAL_Init();
   SystemClock_Config();
   MX_GPIO_Init();
-  UART_HandleTypeDef * uart1 = MX_USART1_UART_Init();
-  UART_HandleTypeDef * uart2 = MX_USART2_UART_Init();
+  UART_HandleTypeDef *uart1 = MX_USART1_UART_Init();
+  UART_HandleTypeDef *uart2 = MX_USART2_UART_Init();
   printf_uart = uart2;
 
-  while (1) {
-    uint8_t cmd[] = "AT";
-    uint8_t resp[128] = {0};
-    if (NULL == AT_Command(uart1, cmd, resp, sizeof(resp))) {
-      printf("AT command failed!\n\r");
-    } else {
-      printf("Response: %s\n\r", resp);
-    }
-    HAL_Delay(1000);
+  printf("\n\r(%s:%d) START PROGRAM\n\r", __FILE__, __LINE__);
+
+  uint8_t resp[128] = {0};
+  if (NULL == AT_Command(uart1, "AT", resp, sizeof(resp))) {
+    printf("(%s:%d) AT command failed!\n\r", __FILE__, __LINE__);
+  } else {
+    printf("Response: %s\n\r", resp);
+  }
+
+  if (NULL == AT_Command2(uart1, "AT+CWJAP_CUR=\"tiglath\",\"thedog123\"", resp, sizeof(resp))) {
+    printf("(%s:%d) AT command failed!\n\r", __FILE__, __LINE__);
+  } else {
+    printf("Response: %s\n\r", resp);
   }
 }
