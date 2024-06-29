@@ -1,0 +1,15 @@
+# Based on the LLVM style, but with a line width of 120 characters
+BasedOnStyle: LLVM
+ColumnLimit: 120
+
+# Custom options
+UseTab: Always
+BreakBeforeBraces: Attach
+AllowShortIfStatementsOnASingleLine: false
+AllowShortLoopsOnASingleLine: false
+AllowShortFunctionsOnASingleLine: All
+AlignConsecutiveAssignments: false
+AlignOperands: false
+SpacesBeforeTrailingComments: 1
+SpaceBeforeParens: ControlStatements
+SpaceBeforeAssignmentOperators: true
