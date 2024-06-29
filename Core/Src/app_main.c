@@ -23,15 +23,18 @@
 extern void SystemClock_Config(void); // grabs auto-generated function from main.c
 static UART_HandleTypeDef *printf_uart = NULL;
 
-void UART_Printf(const char *format, ...) {
-  assert(printf_uart); // needs to be set
-  char buffer[256];
-  va_list args;
-  va_start(args, format);
-  vsnprintf(buffer, sizeof(buffer), format, args);
-  va_end(args);
-  HAL_UART_Transmit(printf_uart, (uint8_t *)buffer, strlen(buffer), HAL_MAX_DELAY);
+int __io_putchar(int ch) {
+  uint8_t c = ch;
+  HAL_UART_Transmit(printf_uart, &c, 1, HAL_MAX_DELAY);
+  return ch;
 }
+
+int __io_getchar(void) {
+  uint8_t c;
+  HAL_UART_Receive(printf_uart, &c, 1, HAL_MAX_DELAY);
+  return c;
+}
+
 
 int main(void) {
   HAL_Init();
@@ -45,9 +48,9 @@ int main(void) {
     uint8_t cmd[] = "AT";
     uint8_t resp[128] = {0};
     if (NULL == AT_Command(uart1, cmd, resp, sizeof(resp))) {
-      UART_Printf("AT command failed!\n\r");
+      printf("AT command failed!\n\r");
     } else {
-      UART_Printf("Response: %s\n\r", resp);
+      printf("Response: %s\n\r", resp);
     }
     HAL_Delay(1000);
   }
