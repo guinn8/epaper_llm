@@ -54,7 +54,7 @@ int main(void) {
   AT_Command_Print(uart1, "AT", resp, sizeof(resp));
   assert(NULL != AT_Command_Print(uart1, "AT+CWMODE_CUR=1", resp, sizeof(resp)));
   assert(NULL != AT_Command_Print(uart1, "AT+CWJAP_CUR=\"tiglath\",\"thedog123\"", resp, sizeof(resp)));
-  // assert(NULL != AT_Command_Print(uart1, "AT+CIFSR", resp, sizeof(resp)));
+  assert(NULL != AT_Command_Print(uart1, "AT+CIFSR", resp, sizeof(resp)));
 
   while (1) {
     HAL_Delay(1000);
