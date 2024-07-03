@@ -22,16 +22,21 @@
 
 extern void SystemClock_Config(void); // grabs auto-generated function from main.c
 static UART_HandleTypeDef *printf_uart = NULL;
+static UART_HandleTypeDef *uart1 = NULL;
 
 int __io_putchar(int ch) {
   uint8_t c = ch;
-  HAL_UART_Transmit(printf_uart, &c, 1, HAL_MAX_DELAY);
+  if (printf_uart) {
+    HAL_UART_Transmit(printf_uart, &c, 1, HAL_MAX_DELAY);
+  }
   return ch;
 }
 
 int __io_getchar(void) {
   uint8_t c;
-  HAL_UART_Receive(printf_uart, &c, 1, HAL_MAX_DELAY);
+  if (printf_uart) {
+    HAL_UART_Receive(printf_uart, &c, 1, HAL_MAX_DELAY);
+  }
   return c;
 }
 
@@ -46,15 +51,12 @@ int main(void) {
   printf("\n\r(%s:%d) START PROGRAM\n\r", __FILE__, __LINE__);
 
   uint8_t resp[128] = {0};
-  if (NULL == AT_Command(uart1, "AT", resp, sizeof(resp))) {
-    printf("(%s:%d) AT command failed!\n\r", __FILE__, __LINE__);
-  } else {
-    printf("Response: %s\n\r", resp);
-  }
+  AT_Command_Print(uart1, "AT", resp, sizeof(resp));
+  assert(NULL != AT_Command_Print(uart1, "AT+CWMODE_CUR=1", resp, sizeof(resp)));
+  assert(NULL != AT_Command_Print(uart1, "AT+CWJAP_CUR=\"tiglath\",\"thedog123\"", resp, sizeof(resp)));
+  // assert(NULL != AT_Command_Print(uart1, "AT+CIFSR", resp, sizeof(resp)));
 
-  if (NULL == AT_Command2(uart1, "AT+CWJAP_CUR=\"tiglath\",\"thedog123\"", resp, sizeof(resp))) {
-    printf("(%s:%d) AT command failed!\n\r", __FILE__, __LINE__);
-  } else {
-    printf("Response: %s\n\r", resp);
+  while (1) {
+    HAL_Delay(1000);
   }
 }
