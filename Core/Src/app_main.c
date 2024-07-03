@@ -17,12 +17,12 @@
 
 #include "driver_esp8266.h"
 #include "main.h"
-#include "peripheral_init.h"
 #include "stm32f4xx_hal_uart.h"
+#include "usart.h"
 
 extern void SystemClock_Config(void); // grabs auto-generated function from main.c
-static UART_HandleTypeDef *printf_uart = NULL;
-static UART_HandleTypeDef *uart1 = NULL;
+static UART_HandleTypeDef *printf_uart = &huart2;
+static UART_HandleTypeDef *modem_uart = &huart1;
 
 int __io_putchar(int ch) {
   uint8_t c = ch;
@@ -40,21 +40,15 @@ int __io_getchar(void) {
   return c;
 }
 
-int main(void) {
-  HAL_Init();
-  SystemClock_Config();
-  MX_GPIO_Init();
-  UART_HandleTypeDef *uart1 = MX_USART1_UART_Init();
-  UART_HandleTypeDef *uart2 = MX_USART2_UART_Init();
-  printf_uart = uart2;
+int app_main(void) {
 
   printf("\n\r(%s:%d) START PROGRAM\n\r", __FILE__, __LINE__);
 
   uint8_t resp[128] = {0};
-  AT_Command_Print(uart1, "AT", resp, sizeof(resp));
-  assert(NULL != AT_Command_Print(uart1, "AT+CWMODE_CUR=1", resp, sizeof(resp)));
-  assert(NULL != AT_Command_Print(uart1, "AT+CWJAP_CUR=\"tiglath\",\"thedog123\"", resp, sizeof(resp)));
-  assert(NULL != AT_Command_Print(uart1, "AT+CIFSR", resp, sizeof(resp)));
+  AT_Command_Print(modem_uart, "AT", resp, sizeof(resp));
+  assert(NULL != AT_Command_Print(modem_uart, "AT+CWMODE_CUR=1", resp, sizeof(resp)));
+  assert(NULL != AT_Command_Print(modem_uart, "AT+CWJAP_CUR=\"tiglath\",\"thedog123\"", resp, sizeof(resp)));
+  assert(NULL != AT_Command_Print(modem_uart, "AT+CIFSR", resp, sizeof(resp)));
 
   while (1) {
     HAL_Delay(1000);
