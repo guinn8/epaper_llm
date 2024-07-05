@@ -37,7 +37,7 @@ bool send_at_command_and_check_response(char *cmd, char *expected_response, char
     while ((HAL_GetTick() - start_tick) < 30000) {
         write_index = (sizeof(resp) - __HAL_DMA_GET_COUNTER(modem_uart->hdmarx)) % sizeof(resp);
         while (read_index != write_index) {
-            // putchar(resp[read_index]);
+            putchar(resp[read_index]);
             if (strncmp(&resp[read_index], expected_response, strlen(expected_response)) == 0) {
                 printf("Received %s for %s\r\n", expected_response, cmd);
                 read_index += strlen(expected_response);
@@ -66,7 +66,7 @@ int app_main(void) {
         // printf("%s\n\r", response);
     }
 
-    if (send_at_command_and_check_response("AT+CWMODE_CUR=1\r\n", "OK", response, sizeof(response))) {
+    if (send_at_command_and_check_response("AT+CWMODE_CUR=3\r\n", "OK", response, sizeof(response))) {
         // printf("%s\n\r", response);
     }
 
@@ -78,8 +78,16 @@ int app_main(void) {
         // printf("%s\n\r", response);
     }
 
-    while (1) {
+    if (send_at_command_and_check_response("AT+CIPMUX=0\r\n", "OK", response, sizeof(response))) {
+        // printf("%s\n\r", response);
+    }
 
-        HAL_Delay(1000);
+
+    while (1) {
+        if (send_at_command_and_check_response("AT+PING=\"93.184.216.34\"\r\n", "OK", response, sizeof(response))) {
+            // printf("%s\n\r", response);
+        }
+    
+        HAL_Delay(10000);
     }
 }
