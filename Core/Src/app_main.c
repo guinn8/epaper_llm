@@ -34,9 +34,10 @@ bool send_at_command_and_check_response(char *cmd, char *expected_response, char
 
     uint32_t start_tick = HAL_GetTick();
     start_at_cmd = read_index;
-    while ((HAL_GetTick() - start_tick) < 10000) {
+    while ((HAL_GetTick() - start_tick) < 30000) {
         write_index = (sizeof(resp) - __HAL_DMA_GET_COUNTER(modem_uart->hdmarx)) % sizeof(resp);
         while (read_index != write_index) {
+            // putchar(resp[read_index]);
             if (strncmp(&resp[read_index], expected_response, strlen(expected_response)) == 0) {
                 printf("Received %s for %s\r\n", expected_response, cmd);
                 read_index += strlen(expected_response);
@@ -57,16 +58,28 @@ int app_main(void) {
     HAL_UART_Receive_DMA(modem_uart, (uint8_t *)resp, sizeof(resp));
 
     char response[1024] = {0};
-    if (send_at_command_and_check_response("AT+RST\r\n", "WIFI DISCONNECT", response, sizeof(response))) {
+    if (send_at_command_and_check_response("AT+RST\r\n", "ready", response, sizeof(response))) {
         // printf("%s\n\r", response);
     }
 
+    if (send_at_command_and_check_response("AT\r\n", "OK", response, sizeof(response))) {
+        // printf("%s\n\r", response);
+    }
 
+    if (send_at_command_and_check_response("AT+CWMODE_CUR=1\r\n", "OK", response, sizeof(response))) {
+        // printf("%s\n\r", response);
+    }
+
+    if (send_at_command_and_check_response("AT+CWJAP_CUR=\"tiglath\",\"thedog123\"\r\n", "OK", response, sizeof(response))) {
+        // printf("%s\n\r", response);
+    }
+
+    if (send_at_command_and_check_response("AT+CIFSR\r\n", "OK", response, sizeof(response))) {
+        // printf("%s\n\r", response);
+    }
 
     while (1) {
-        if (send_at_command_and_check_response("AT\r\n", "OK", response, sizeof(response))) {
-           // printf("%s\n\r", response);
-        }
+
         HAL_Delay(1000);
     }
 }
