@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -88,6 +89,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_USART1_UART_Init();
   /* USER CODE BEGIN 2 */
@@ -153,6 +155,19 @@ void SystemClock_Config(void)
 
 /* USER CODE BEGIN 4 */
 #pragma GCC diagnostic pop
+
+int __io_putchar(int ch) {
+  uint8_t c = ch;
+  HAL_UART_Transmit(&huart2, &c, 1, HAL_MAX_DELAY);
+  return ch;
+}
+
+int __io_getchar(void) {
+  uint8_t c;
+  HAL_UART_Receive(&huart2, &c, 1, HAL_MAX_DELAY);
+  return c;
+}
+
 /* USER CODE END 4 */
 
 /**
