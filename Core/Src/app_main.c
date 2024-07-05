@@ -34,7 +34,7 @@ bool send_at_command_and_check_response(char *cmd, char *expected_response, char
 
     uint32_t start_tick = HAL_GetTick();
     start_at_cmd = read_index;
-    while ((HAL_GetTick() - start_tick) < 30000) {
+    while ((HAL_GetTick() - start_tick) < 20000) {
         write_index = (sizeof(resp) - __HAL_DMA_GET_COUNTER(modem_uart->hdmarx)) % sizeof(resp);
         while (read_index != write_index) {
             putchar(resp[read_index]);
@@ -53,69 +53,63 @@ bool send_at_command_and_check_response(char *cmd, char *expected_response, char
     return false;
 }
 
+void ping_pong_communication(void) {
+    char response[1024] = {0};
+    char *ping_message = "ping\r\n";
+    char *pong_message = "pong";
+
+    while (1) {
+        // Send "ping" to the server
+        if (send_at_command_and_check_response("AT+CIPSEND=6\r\n", ">", response, sizeof(response))) {
+            send_at_command_and_check_response("ping\r\n", "OK", response, sizeof(response));
+        }
+
+        send_at_command_and_check_response("+IPD, 4:", "pong", response, sizeof(response));
+
+
+        // Delay before sending the next ping
+        HAL_Delay(10000);
+    }
+}
+
 int app_main(void) {
     printf("\n\r(%s:%d) START PROGRAM\n\r", __FILE__, __LINE__);
     HAL_UART_Receive_DMA(modem_uart, (uint8_t *)resp, sizeof(resp));
 
     char response[1024] = {0};
     if (send_at_command_and_check_response("AT+RST\r\n", "ready", response, sizeof(response))) {
-        // printf("%s\n\r", response);
+        printf("Module reset.\n\r");
     }
 
     if (send_at_command_and_check_response("AT\r\n", "OK", response, sizeof(response))) {
-        // printf("%s\n\r", response);
+        printf("AT OK.\n\r");
     }
 
     if (send_at_command_and_check_response("AT+CWMODE_CUR=3\r\n", "OK", response, sizeof(response))) {
-        // printf("%s\n\r", response);
+        printf("WiFi mode set.\n\r");
     }
 
     if (send_at_command_and_check_response("AT+CWJAP_CUR=\"tiglath\",\"thedog123\"\r\n", "OK", response, sizeof(response))) {
-        // printf("%s\n\r", response);
+        printf("Connected to WiFi.\n\r");
     }
 
     if (send_at_command_and_check_response("AT+CIFSR\r\n", "OK", response, sizeof(response))) {
-        // printf("%s\n\r", response);
+        printf("Got IP address.\n\r");
     }
 
     if (send_at_command_and_check_response("AT+CIPMUX=0\r\n", "OK", response, sizeof(response))) {
-        // printf("%s\n\r", response);
+        printf("Single connection mode set.\n\r");
     }
 
     while (1) {
-        if (send_at_command_and_check_response("AT+PING=\"10.0.0.94\"\r\n", "OK", response, sizeof(response))) { // 93.184.216.34
+        if (send_at_command_and_check_response("AT+CIPSTART=\"TCP\",\"10.0.0.94\",8080\r\n", "OK", response, sizeof(response))) {
+            printf("Connected to server.\n\r");
             break;
         }
-        
         HAL_Delay(10000);
     }
 
-    while (1) { // , "",
-        if (send_at_command_and_check_response("AT+CIPSTART=\"TCP\",\"10.0.0.94\",8080\r\n", "OK", response, sizeof(response))) { // 93.184.216.34
-            break;
-        }
-        
-        HAL_Delay(10000);
-    }
+    ping_pong_communication();
 
-    if (send_at_command_and_check_response("AT+CIPMODE=1\r\n", "OK", response, sizeof(response))) { 
-        
-    }
-    
-    if (send_at_command_and_check_response("AT+CIPSEND\r\n", "OK", response, sizeof(response))) { 
-        
-    }
-    
-    while (1)
-    {
-        if (send_at_command_and_check_response("hello world!\r\n", "OK", response, sizeof(response))) { 
-        
-    }
-    }
-    
-
-
-    
-     
-
+    return 0;
 }

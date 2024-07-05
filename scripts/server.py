@@ -14,8 +14,11 @@ def start_server(host='0.0.0.0', port=8080):
                     data = client_socket.recv(1024)
                     if not data:
                         break
-                    print(f"Received data: {data.decode('utf-8')}")
-                    client_socket.sendall(data)
+                    message = data.decode('utf-8')
+                    print(f"Received data: {message}")
+                    response = "pong"
+                    print(f"Sending: {response.encode('utf-8')}")
+                    client_socket.sendall(response.encode('utf-8'))
 
 if __name__ == "__main__":
     start_server()
