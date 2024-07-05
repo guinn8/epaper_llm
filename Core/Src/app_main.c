@@ -82,12 +82,40 @@ int app_main(void) {
         // printf("%s\n\r", response);
     }
 
-
     while (1) {
-        if (send_at_command_and_check_response("AT+PING=\"93.184.216.34\"\r\n", "OK", response, sizeof(response))) {
-            // printf("%s\n\r", response);
+        if (send_at_command_and_check_response("AT+PING=\"10.0.0.94\"\r\n", "OK", response, sizeof(response))) { // 93.184.216.34
+            break;
         }
-    
+        
         HAL_Delay(10000);
     }
+
+    while (1) { // , "",
+        if (send_at_command_and_check_response("AT+CIPSTART=\"TCP\",\"10.0.0.94\",8080\r\n", "OK", response, sizeof(response))) { // 93.184.216.34
+            break;
+        }
+        
+        HAL_Delay(10000);
+    }
+
+    if (send_at_command_and_check_response("AT+CIPMODE=1\r\n", "OK", response, sizeof(response))) { 
+        
+    }
+    
+    if (send_at_command_and_check_response("AT+CIPSEND\r\n", "OK", response, sizeof(response))) { 
+        
+    }
+    
+    while (1)
+    {
+        if (send_at_command_and_check_response("hello world!\r\n", "OK", response, sizeof(response))) { 
+        
+    }
+    }
+    
+
+
+    
+     
+
 }
