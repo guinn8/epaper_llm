@@ -27,35 +27,39 @@ void epd_display_line(uint8_t x, uint8_t y, const char* line) {
     EPD_2in13_V3_Display_Partial(BlackImage);
 }
 
-void epd_tty_demo(const char* text) {
-    uint8_t x = 0, y = 0;
+
+
+void display_input_char(char input) {
+    static uint8_t x = 0, y = 0;
     const uint8_t char_height = Font20.Height;
+    static char line_buffer[24];
+    static int buffer_index = 0;
 
-    Paint_NewImage(BlackImage, EPD_2in13_V3_WIDTH, EPD_2in13_V3_HEIGHT, 90, WHITE); 
-    Paint_SelectImage(BlackImage);
-    Paint_Clear(WHITE);
-
-    const char* line_start = text;
-    for (const char* p = text; ; ++p) {
-        if (*p == '\n' || *p == '\0') {
-            char line[EPD_2in13_V3_WIDTH / Font20.Width + 1];
-            int length = p - line_start;
-            strncpy(line, line_start, length);
-            line[length] = '\0';
-
-            epd_display_line(x, y, line);
-
-            y += char_height;
-            line_start = p + 1;
+    if (input == '\r') {
+        line_buffer[buffer_index] = '\0';
+        epd_display_line(x, y, line_buffer);
+        buffer_index = 0;
+        y += char_height;
+        x = 0;
+    } else {
+        if (buffer_index < sizeof(line_buffer) - 1) {
+            line_buffer[buffer_index++] = input;
         }
-        if (*p == '\0') break;
     }
 }
 
 void epd_test(void) {
     epd_initialize();
 
-    epd_tty_demo("Hello, this is a\nTTY-like display.\nIt streams chars\nline by line.\nEnjoy!");
+    Paint_NewImage(BlackImage, EPD_2in13_V3_WIDTH, EPD_2in13_V3_HEIGHT, 90, WHITE); 
+    Paint_SelectImage(BlackImage);
+    Paint_Clear(WHITE);
+
+    char input;
+    while ((input = __io_getchar()) != EOF) {
+        __io_putchar(input);
+        display_input_char(input);
+    }
 
     EPD_2in13_V3_Clear();
     EPD_2in13_V3_Sleep();
