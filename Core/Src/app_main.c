@@ -4,42 +4,17 @@
  * @date 2024-06-27
  */
 
-
-#include "driver_esp8266.h"
-#include "main.h"
-#include "DEV_Config.h"
-#include "GUI_Paint.h"
-#include "EPD_2in13_V3.h"
-#define Imagesize ((EPD_2in13_V3_WIDTH % 8 == 0)? (EPD_2in13_V3_WIDTH / 8 ): (EPD_2in13_V3_WIDTH / 8 + 1)) * EPD_2in13_V3_HEIGHT
-
-void epd_test(void){
-    static uint8_t BlackImage[Imagesize] = {0};
-    DEV_Module_Init();
-    EPD_2in13_V3_Init();
-    EPD_2in13_V3_Clear();
-
-
-    HAL_Delay(1000);
-    
-
-    Paint_NewImage(BlackImage, EPD_2in13_V3_WIDTH, EPD_2in13_V3_HEIGHT, 90, WHITE);
-    Paint_SelectImage(BlackImage);
-    Paint_Clear(WHITE);
-    Paint_DrawString_EN(25, 25, "hello world", &Font24, BLACK, WHITE);
-    EPD_2in13_V3_Display(BlackImage);
-}
-
+#include <stdio.h>
+#include "epd_driver.h"
 
 int app_main(void) {
     printf("\n\r(%s:%d) START PROGRAM\n\r", __FILE__, __LINE__);
 
+    epd_test();
 
-    while (1)
-    {
+    while (1) {
         HAL_Delay(1000);
     }
-    
-    // setup_network();
 
     return 0;
 }

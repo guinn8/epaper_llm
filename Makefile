@@ -39,10 +39,13 @@ C_SOURCES =  \
 Core/Src/main.c \
 Core/Src/driver_esp8266.c \
 Core/Src/app_main.c \
+Core/Src/epd_driver.c \
 libs/e-Paper-1/STM32/STM32-F103ZET6/User/GUI/GUI_Paint.c \
 libs/e-Paper-1/STM32/STM32-F103ZET6/User/Config/DEV_Config.c \
 libs/e-Paper-1/STM32/STM32-F103ZET6/User/e-Paper/EPD_2in13_V3.c \
 libs/e-Paper-1/STM32/STM32-F103ZET6/User/Fonts/font24.c \
+libs/e-Paper-1/STM32/STM32-F103ZET6/User/Fonts/font20.c \
+libs/e-Paper-1/STM32/STM32-F103ZET6/User/Fonts/font16.c \
 Core/Src/stm32f4xx_it.c \
 Core/Src/stm32f4xx_hal_msp.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c \
