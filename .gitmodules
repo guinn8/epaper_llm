@@ -1,3 +1,3 @@
-[submodule "libs/e-Paper"]
-	path = libs/e-Paper
+[submodule "libs/e-Paper-1"]
+	path = libs/e-Paper-1
 	url = https://github.com/guinn8/e-Paper-1.git
