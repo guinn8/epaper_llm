@@ -39,8 +39,10 @@ C_SOURCES =  \
 Core/Src/main.c \
 Core/Src/driver_esp8266.c \
 Core/Src/app_main.c \
-libs/e-Paper/STM32/STM32-F103ZET6/User/Config/DEV_Config.c \
-libs/e-Paper/STM32/STM32-F103ZET6/User/e-Paper/EPD_2in13b_V4.c \
+libs/e-Paper-1/STM32/STM32-F103ZET6/User/GUI/GUI_Paint.c \
+libs/e-Paper-1/STM32/STM32-F103ZET6/User/Config/DEV_Config.c \
+libs/e-Paper-1/STM32/STM32-F103ZET6/User/e-Paper/EPD_2in13_V3.c \
+libs/e-Paper-1/STM32/STM32-F103ZET6/User/Fonts/font24.c \
 Core/Src/stm32f4xx_it.c \
 Core/Src/stm32f4xx_hal_msp.c \
 Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.c \
@@ -127,10 +129,11 @@ AS_INCLUDES =
 # C includes
 C_INCLUDES =  \
 -ICore/Inc \
--Ilibs/e-Paper/STM32/STM32-F103ZET6/User/Config \
--Ilibs/e-Paper/STM32/STM32-F103ZET6/User/e-Paper \
--Ilibs/e-Paper/STM32/STM32-F103ZET6/User/Fonts \
--Ilibs/e-Paper/STM32/STM32-F103ZET6/User/GUI \
+-Ilibs/e-Paper-1/STM32/STM32-F103ZET6/User/Config \
+-Ilibs/e-Paper-1/STM32/STM32-F103ZET6/User/e-Paper \
+-Ilibs/e-Paper-1/STM32/STM32-F103ZET6/User/Fonts \
+-Ilibs/e-Paper-1/STM32/STM32-F103ZET6/User/GUI \
+-Ilibs/e-Paper-1/STM32/STM32-F103ZET6/User/e-Paper \
 -IDrivers/STM32F4xx_HAL_Driver/Inc \
 -IDrivers/STM32F4xx_HAL_Driver/Inc/Legacy \
 -IDrivers/CMSIS/Device/ST/STM32F4xx/Include \
