@@ -72,8 +72,14 @@ void ping_pong_communication(void) {
     }
 }
 
+
 int app_main(void) {
     printf("\n\r(%s:%d) START PROGRAM\n\r", __FILE__, __LINE__);
+
+    EPD_2IN13B_V4_Init();
+    EPD_2IN13B_V4_Clear();
+
+
     HAL_UART_Receive_DMA(modem_uart, (uint8_t *)resp, sizeof(resp));
 
     char response[1024] = {0};
