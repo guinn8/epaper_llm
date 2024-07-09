@@ -10,9 +10,13 @@ def handle_client(client_socket, client_address):
                 break
             message = data.decode('utf-8')
             print(f"Received data: {message}")
-            response = "pong"
-            print(f"Sending: {response.encode('utf-8')}")
-            client_socket.sendall(response.encode('utf-8'))
+            
+            # Echo the received message back to the client
+            client_socket.sendall(data)
+
+            # Prompt for user input to send to the connected client
+            user_input = input("Enter message to send: ")
+            client_socket.sendall(user_input.encode('utf-8'))
 
 def start_server(host='0.0.0.0', port=8080):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_socket:

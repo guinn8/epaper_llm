@@ -14,6 +14,10 @@ void epd_initialize(void) {
     EPD_2in13_V3_Init();
     EPD_2in13_V3_Clear();
     HAL_Delay(1000);
+
+    Paint_NewImage(BlackImage, EPD_2in13_V3_WIDTH, EPD_2in13_V3_HEIGHT, 90, WHITE); 
+    Paint_SelectImage(BlackImage);
+    Paint_Clear(WHITE);
 }
 
 void epd_display_image(const uint8_t* image) {
@@ -24,7 +28,7 @@ void epd_display_image(const uint8_t* image) {
 void epd_display_line(uint8_t x, uint8_t y, const char* line) {
     Paint_SelectImage(BlackImage);
     Paint_DrawString_EN(x, y, line, &Font20, WHITE, BLACK);
-    EPD_2in13_V3_Display_Partial(BlackImage);
+    EPD_2in13_V3_Display_Base(BlackImage);
 }
 
 
@@ -50,10 +54,6 @@ void display_input_char(char input) {
 
 void epd_test(void) {
     epd_initialize();
-
-    Paint_NewImage(BlackImage, EPD_2in13_V3_WIDTH, EPD_2in13_V3_HEIGHT, 90, WHITE); 
-    Paint_SelectImage(BlackImage);
-    Paint_Clear(WHITE);
 
     char input;
     while ((input = __io_getchar()) != EOF) {
