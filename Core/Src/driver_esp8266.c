@@ -61,9 +61,6 @@ bool send_at_command_and_check_response(char *cmd, char *expected_response, char
 
 void server_communication(void) {
   char response[1024] = {0};
-  if (send_at_command_and_check_response("AT+CIPSERVER=1\r\n", "CONNECT", response, sizeof(response))) {
-    printf("Server created on port 333.\n\r");
-  }
 
   if (send_at_command_and_check_response("+IPD, 0:\r\n", "+IPD, 0:", response, sizeof(response))) {
     char *num_chars_start = strstr(response, ",0,");
@@ -79,7 +76,7 @@ void server_communication(void) {
         char message[1024] = {0};
         strncpy(message, msg_start, num_chars);
         message[num_chars] = '\0'; // Ensure null-termination
-        epd_display_line(0, 1, message);
+        epd_display_line(10, 30, message);
       }
     }
   }
@@ -90,38 +87,86 @@ void server_communication(void) {
 }
 
 
+#include <stdio.h>
+#include <string.h>
+
+typedef struct {
+    char ap_ip[16];
+    char ap_mac[18];
+    char sta_ip[16];
+    char sta_mac[18];
+} NetworkInfo;
+
+int parse_cifsr_response(const char *response, NetworkInfo *info) {
+    const char *ap_ip_str = "+CIFSR:APIP,\"";
+    const char *ap_mac_str = "+CIFSR:APMAC,\"";
+    const char *sta_ip_str = "+CIFSR:STAIP,\"";
+    const char *sta_mac_str = "+CIFSR:STAMAC,\"";
+
+    const char *ap_ip_start = strstr(response, ap_ip_str);
+    const char *ap_mac_start = strstr(response, ap_mac_str);
+    const char *sta_ip_start = strstr(response, sta_ip_str);
+    const char *sta_mac_start = strstr(response, sta_mac_str);
+
+    if (!ap_ip_start || !ap_mac_start || !sta_ip_start || !sta_mac_start) {
+        return -1; // Parsing failed
+    }
+
+    sscanf(ap_ip_start + strlen(ap_ip_str), "%[^\"]", info->ap_ip);
+    sscanf(ap_mac_start + strlen(ap_mac_str), "%[^\"]", info->ap_mac);
+    sscanf(sta_ip_start + strlen(sta_ip_str), "%[^\"]", info->sta_ip);
+    sscanf(sta_mac_start + strlen(sta_mac_str), "%[^\"]", info->sta_mac);
+
+    return 0; // Parsing successful
+}
+
+
 void setup_network(void) {
-  HAL_UART_Receive_DMA(modem_uart, (uint8_t *)resp, sizeof(resp));
+    HAL_UART_Receive_DMA(modem_uart, (uint8_t *)resp, sizeof(resp));
 
-  char response[1024] = {0};
-  if (send_at_command_and_check_response("AT+RST\r\n", "ready", response, sizeof(response))) {
-    printf("Module reset.\n\r");
-  }
+    char response[1024] = {0};
+    if (send_at_command_and_check_response("AT+RST\r\n", "ready", response, sizeof(response))) {
+        printf("Module reset.\n\r");
+    }
 
-  if (send_at_command_and_check_response("AT\r\n", "OK", response, sizeof(response))) {
-    printf("AT OK.\n\r");
-  }
+    if (send_at_command_and_check_response("AT\r\n", "OK", response, sizeof(response))) {
+        printf("AT OK.\n\r");
+    }
 
-  if (send_at_command_and_check_response("AT+CWMODE_CUR=3\r\n", "OK", response, sizeof(response))) {
-    printf("WiFi mode set.\n\r");
-  }
+    if (send_at_command_and_check_response("AT+CWMODE_CUR=3\r\n", "OK", response, sizeof(response))) {
+        printf("WiFi mode set.\n\r");
+    }
 
-  if (send_at_command_and_check_response("AT+CWJAP_CUR=\"tiglath\",\"thedog123\"\r\n", "OK", response,
-					 sizeof(response))) {
-    printf("Connected to WiFi.\n\r");
-  }
+    if (send_at_command_and_check_response("AT+CWJAP_CUR=\"tiglath\",\"thedog123\"\r\n", "OK", response,
+                                          sizeof(response))) {
+        printf("Connected to WiFi.\n\r");
+    }
 
-  if (send_at_command_and_check_response("AT+CIFSR\r\n", "OK", response, sizeof(response))) {
-    printf("Got IP address.\n\r");
-  }
+    if (send_at_command_and_check_response("AT+CIFSR\r\n", "OK", response, sizeof(response))) {
+        printf("Got IP address.\n\r");
+    }
 
-  if (send_at_command_and_check_response("AT+CWMODE=3\r\n", "OK", response, sizeof(response))) {
-    printf("CIPMODE 1 mode set.\n\r");
-  }
+    printf("response = \"%s\"\n\r", response);
+    // epd_display_line(0, 0, response);
 
-  if (send_at_command_and_check_response("AT+CIPMUX=1\r\n", "OK", response, sizeof(response))) {
-    printf("CIPMODE 1 mode set.\n\r");
-  }
+    NetworkInfo network_info = {0};
+    if (parse_cifsr_response(response, &network_info) == 0) {
+        printf("Parsed Network Info:\nAP IP: %s\nAP MAC: %s\nSTA IP: %s\nSTA MAC: %s\n",
+               network_info.ap_ip, network_info.ap_mac, network_info.sta_ip, network_info.sta_mac);
+        epd_display_line(0, 0, network_info.sta_ip);
+    } else {
+        printf("Failed to parse CIFSR response.\n");
+    }
 
+    if (send_at_command_and_check_response("AT+CWMODE=3\r\n", "OK", response, sizeof(response))) {
+        printf("CIPMODE 1 mode set.\n\r");
+    }
 
+    if (send_at_command_and_check_response("AT+CIPMUX=1\r\n", "OK", response, sizeof(response))) {
+        printf("CIPMODE 1 mode set.\n\r");
+    }
+
+    if (send_at_command_and_check_response("AT+CIPSERVER=1\r\n", "CONNECT", response, sizeof(response))) {
+        printf("Server created on port 333.\n\r");
+    }
 }

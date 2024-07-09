@@ -11,13 +11,12 @@ int app_main(void) {
     printf("\n\r(%s:%d) START PROGRAM\n\r", __FILE__, __LINE__);
 
     epd_initialize();
+    setup_network();
+    server_communication();
 
-        setup_network();
-        server_communication();
 
     while (1) {
-
-        HAL_Delay(1000);
+        HAL_Delay(5000);
     }
 
     return 0;

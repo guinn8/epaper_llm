@@ -28,7 +28,9 @@ void epd_display_image(const uint8_t* image) {
 void epd_display_line(uint8_t x, uint8_t y, const char* line) {
     Paint_SelectImage(BlackImage);
     Paint_DrawString_EN(x, y, line, &Font20, WHITE, BLACK);
-    EPD_2in13_V3_Display_Base(BlackImage);
+    EPD_2in13_V3_Display_Partial(BlackImage);
+          EPD_2in13_V3_Clear();
+    EPD_2in13_V3_Sleep();
 }
 
 

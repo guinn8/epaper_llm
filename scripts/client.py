@@ -1,5 +1,4 @@
 import socket
-import time
 
 def send_data_to_server(data, host='10.0.0.66', port=333):
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
@@ -7,6 +6,6 @@ def send_data_to_server(data, host='10.0.0.66', port=333):
         client_socket.sendall(data.encode('utf-8'))
 
 if __name__ == "__main__":
-    data = "Hello ESP32!"
+    user_message = input("Enter the message you want to send: ")
+    data = "ayy lmao" if user_message == "" else user_message
     send_data_to_server(data)
-
