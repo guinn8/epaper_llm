@@ -14,7 +14,6 @@ int app_main(void) {
     setup_network();
     server_communication();
 
-
     while (1) {
         HAL_Delay(5000);
     }

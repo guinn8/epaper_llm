@@ -18,9 +18,11 @@
 #include "epd_driver.h"
 #include "main.h"
 
+#define PORT "7000"
+
 extern UART_HandleTypeDef huart1;
 static UART_HandleTypeDef *modem_uart = &huart1;
-static char resp[1024] = {0};
+static char resp[5024] = {0};
 static uint16_t read_index = 0;
 volatile uint16_t write_index = 0;
 static uint16_t start_at_cmd = 0;
@@ -43,88 +45,115 @@ bool send_at_command_and_check_response(char *cmd, char *expected_response, char
     while (read_index != write_index) {
       putchar(resp[read_index]);
       if (strncmp(&resp[read_index], expected_response, strlen(expected_response)) == 0) {
-	printf("Received %s for %s\r\n", expected_response, cmd);
-	read_index += strlen(expected_response);
-	copy_string_from_circular_buffer(response, response_len);
-	return true;
+        for (size_t i = 0; i < strlen(expected_response); i++)
+        {
+          putchar(resp[read_index + i + 1]);
+        }
+        
+        printf("\n\r");
+        read_index += strlen(expected_response);
+        copy_string_from_circular_buffer(response, response_len);
+        return true;
       }
       read_index = (read_index + 1) % sizeof(resp);
     }
     HAL_Delay(10);
   }
 
-  printf("Command %s failed!\r\n", cmd);
+  // printf("Command failed: %s \r\n", cmd);
   return false;
 }
 
-
-
 void server_communication(void) {
   char response[1024] = {0};
-
-  if (send_at_command_and_check_response("+IPD, 0:\r\n", "+IPD, 0:", response, sizeof(response))) {
-    char *num_chars_start = strstr(response, ",0,");
-    if (num_chars_start) {
-      num_chars_start += 3; // Move past ",0,"
-      int num_chars = atoi(num_chars_start);
-      
-
-      // Find the start of the message
-      char *msg_start = strstr(num_chars_start, ":");
-      if (msg_start) {
-        msg_start++; // Move past ":"
-        char message[1024] = {0};
-        strncpy(message, msg_start, num_chars);
-        message[num_chars] = '\0'; // Ensure null-termination
-        epd_display_line(10, 30, message);
-      }
+  int num_chars;
+  char message[1024] = {0};
+  
+  while (1)
+  {
+    if (send_at_command_and_check_response("AT+CIPSTART=\"TCP\", \"iot.espressif.cn\", 8000 \r\n", "OK", response, sizeof(response))) {
+      break;
     }
   }
-
-
-
   
+
+  epd_initialize();
+  
+
+ 
+  epd_display_line(0, 0, response);
+
 }
 
+
+typedef struct {
+  char ap_ip[16];
+  char ap_mac[18];
+  char sta_ip[16];
+  char sta_mac[18];
+} NetworkInfo;
+
+int parse_cifsr_response(const char *response, NetworkInfo *info) {
+  const char *ap_ip_str = "+CIFSR:APIP,\"";
+  const char *ap_mac_str = "+CIFSR:APMAC,\"";
+  const char *sta_ip_str = "+CIFSR:STAIP,\"";
+  const char *sta_mac_str = "+CIFSR:STAMAC,\"";
+
+  const char *ap_ip_start = strstr(response, ap_ip_str);
+  const char *ap_mac_start = strstr(response, ap_mac_str);
+  const char *sta_ip_start = strstr(response, sta_ip_str);
+  const char *sta_mac_start = strstr(response, sta_mac_str);
+
+  if (!ap_ip_start || !ap_mac_start || !sta_ip_start || !sta_mac_start) {
+    return -1; // Parsing failed
+  }
+
+  sscanf(ap_ip_start + strlen(ap_ip_str), "%[^\"]", info->ap_ip);
+  sscanf(ap_mac_start + strlen(ap_mac_str), "%[^\"]", info->ap_mac);
+  sscanf(sta_ip_start + strlen(sta_ip_str), "%[^\"]", info->sta_ip);
+  sscanf(sta_mac_start + strlen(sta_mac_str), "%[^\"]", info->sta_mac);
+
+  return 0; // Parsing successful
+}
 
 #include <stdio.h>
 #include <string.h>
 
-typedef struct {
-    char ap_ip[16];
-    char ap_mac[18];
-    char sta_ip[16];
-    char sta_mac[18];
-} NetworkInfo;
+void ping_pong_communication(void) {
+    char response[1024] = {0};
 
-int parse_cifsr_response(const char *response, NetworkInfo *info) {
-    const char *ap_ip_str = "+CIFSR:APIP,\"";
-    const char *ap_mac_str = "+CIFSR:APMAC,\"";
-    const char *sta_ip_str = "+CIFSR:STAIP,\"";
-    const char *sta_mac_str = "+CIFSR:STAMAC,\"";
-
-    const char *ap_ip_start = strstr(response, ap_ip_str);
-    const char *ap_mac_start = strstr(response, ap_mac_str);
-    const char *sta_ip_start = strstr(response, sta_ip_str);
-    const char *sta_mac_start = strstr(response, sta_mac_str);
-
-    if (!ap_ip_start || !ap_mac_start || !sta_ip_start || !sta_mac_start) {
-        return -1; // Parsing failed
+    if (!send_at_command_and_check_response("AT+CIPSEND\r\n", ">", response, sizeof(response))) {
+        return;
     }
 
-    sscanf(ap_ip_start + strlen(ap_ip_str), "%[^\"]", info->ap_ip);
-    sscanf(ap_mac_start + strlen(ap_mac_str), "%[^\"]", info->ap_mac);
-    sscanf(sta_ip_start + strlen(sta_ip_str), "%[^\"]", info->sta_ip);
-    sscanf(sta_mac_start + strlen(sta_mac_str), "%[^\"]", info->sta_mac);
+    const char eot[] = "<|eot_id|>";
+    while (1) {
+        memset(response, NULL, sizeof(response));
+        printf("trying to prompt llm server...\n\r");
+        if (send_at_command_and_check_response("give me only 16 jazzy words: zip zop zoop!\n\r", "<|eot_id|>", response, 100)) {
+            printf("\r\nSuccessful ping-pong message!\n\r");
+            printf("\n got response = \"%s\"\n\r", response);
+            epd_initialize();
+            char* pos = strstr(response, "<|");
+            if (pos != NULL) {
+                *pos = '\0';
+            }
+            epd_display_line(0, 0, response);
+        }
+        else{
+        printf("\n\rError got response = \"%s\"\n\r", response);
 
-    return 0; // Parsing successful
+        }
+        HAL_Delay(5000);
+    }
 }
 
 
-void setup_network(void) {
+void setup_network(void){
     HAL_UART_Receive_DMA(modem_uart, (uint8_t *)resp, sizeof(resp));
 
     char response[1024] = {0};
+
     if (send_at_command_and_check_response("AT+RST\r\n", "ready", response, sizeof(response))) {
         printf("Module reset.\n\r");
     }
@@ -137,8 +166,7 @@ void setup_network(void) {
         printf("WiFi mode set.\n\r");
     }
 
-    if (send_at_command_and_check_response("AT+CWJAP_CUR=\"tiglath\",\"thedog123\"\r\n", "OK", response,
-                                          sizeof(response))) {
+    if (send_at_command_and_check_response("AT+CWJAP_CUR=\"tiglath\",\"thedog123\"\r\n", "OK", response, sizeof(response))) {
         printf("Connected to WiFi.\n\r");
     }
 
@@ -146,27 +174,22 @@ void setup_network(void) {
         printf("Got IP address.\n\r");
     }
 
-    printf("response = \"%s\"\n\r", response);
-    // epd_display_line(0, 0, response);
-
-    NetworkInfo network_info = {0};
-    if (parse_cifsr_response(response, &network_info) == 0) {
-        printf("Parsed Network Info:\nAP IP: %s\nAP MAC: %s\nSTA IP: %s\nSTA MAC: %s\n",
-               network_info.ap_ip, network_info.ap_mac, network_info.sta_ip, network_info.sta_mac);
-        epd_display_line(0, 0, network_info.sta_ip);
-    } else {
-        printf("Failed to parse CIFSR response.\n");
+    if (send_at_command_and_check_response("AT+CIPMUX=0\r\n", "OK", response, sizeof(response))) {
+        printf("Single connection mode set.\n\r");
     }
 
-    if (send_at_command_and_check_response("AT+CWMODE=3\r\n", "OK", response, sizeof(response))) {
-        printf("CIPMODE 1 mode set.\n\r");
+    while (1) {
+        if (send_at_command_and_check_response("AT+CIPSTART=\"TCP\",\"10.0.0.201\","PORT"\r\n", "OK", response, sizeof(response))) {
+            printf("Connected to server.\n\r");
+            break;
+        }
+        HAL_Delay(10000);
     }
 
-    if (send_at_command_and_check_response("AT+CIPMUX=1\r\n", "OK", response, sizeof(response))) {
-        printf("CIPMODE 1 mode set.\n\r");
+   if (send_at_command_and_check_response("AT+CIPMODE=1\r\n", "OK", response, sizeof(response))) {
     }
 
-    if (send_at_command_and_check_response("AT+CIPSERVER=1\r\n", "CONNECT", response, sizeof(response))) {
-        printf("Server created on port 333.\n\r");
-    }
+    
+
+    ping_pong_communication();
 }

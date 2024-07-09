@@ -13,7 +13,6 @@ void epd_initialize(void) {
     DEV_Module_Init();
     EPD_2in13_V3_Init();
     EPD_2in13_V3_Clear();
-    HAL_Delay(1000);
 
     Paint_NewImage(BlackImage, EPD_2in13_V3_WIDTH, EPD_2in13_V3_HEIGHT, 90, WHITE); 
     Paint_SelectImage(BlackImage);
@@ -29,7 +28,7 @@ void epd_display_line(uint8_t x, uint8_t y, const char* line) {
     Paint_SelectImage(BlackImage);
     Paint_DrawString_EN(x, y, line, &Font20, WHITE, BLACK);
     EPD_2in13_V3_Display_Partial(BlackImage);
-          EPD_2in13_V3_Clear();
+    EPD_2in13_V3_Clear();
     EPD_2in13_V3_Sleep();
 }
 
@@ -38,7 +37,7 @@ void epd_display_line(uint8_t x, uint8_t y, const char* line) {
 void display_input_char(char input) {
     static uint8_t x = 0, y = 0;
     const uint8_t char_height = Font20.Height;
-    static char line_buffer[24];
+    static char line_buffer[128];
     static int buffer_index = 0;
 
     if (input == '\r') {
