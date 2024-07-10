@@ -14,7 +14,7 @@ void epd_initialize(void) {
     EPD_2in13_V3_Init();
     EPD_2in13_V3_Clear();
 
-    Paint_NewImage(BlackImage, EPD_2in13_V3_WIDTH, EPD_2in13_V3_HEIGHT, 90, WHITE); 
+    Paint_NewImage(BlackImage, EPD_2in13_V3_WIDTH, EPD_2in13_V3_HEIGHT, 270, WHITE); 
     Paint_SelectImage(BlackImage);
     Paint_Clear(WHITE);
 }
